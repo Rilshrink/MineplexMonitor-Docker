@@ -20,10 +20,12 @@ export class Config {
         */
     }
 
+    /*
     private static createDefaultConfigFile() {
         this.logger.log('Config file not found! Create new config file.');
         fs.writeFileSync(this._configPath, JSON.stringify(this.getDefaultConfig(), null, 4));
     }
+    */
 
     private static getDefaultConfig(): ConfigType {
         return {
