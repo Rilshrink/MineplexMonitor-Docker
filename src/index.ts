@@ -9,5 +9,7 @@ Config.init();
     await DatabaseManager.init();
     await Webserver.init();
     await RedisManager.init();
-    await CommandManager.init();
+    if (!process.env.MM_NO_COMMAND_MANAGER) { // Has issues with headless environments
+        await CommandManager.init();
+    }
 })();

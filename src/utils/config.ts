@@ -5,17 +5,19 @@ import Logger from './log';
 export class Config {
     private static logger = new Logger('Config');
 
-    private static _configPath = path.join(__dirname, '../..', 'config.json');
+    //private static _configPath = path.join(__dirname, '../..', 'config.json');
 
     static config: ConfigType = Config.getDefaultConfig();
 
     static init() {
         this.logger.log('Loading config');
+        /*
         if (fs.existsSync(this._configPath)) {
             this.config = JSON.parse(fs.readFileSync(this._configPath, 'utf-8'));
         } else {
             this.createDefaultConfigFile();
         }
+        */
     }
 
     private static createDefaultConfigFile() {
@@ -26,17 +28,17 @@ export class Config {
     private static getDefaultConfig(): ConfigType {
         return {
             databaseConnection: {
-                address: '127.0.0.1',
-                port: 3306,
-                username: 'root',
-                password: 'root'
+                address: process.env.MM_MYSQL_ADDR ? process.env.MM_MYSQL_ADDR : '127.0.0.1',
+                port: process.env.MM_MYSQL_PORT ? Number(process.env.MM_MYSQL_PORT) : 3306,
+                username: process.env.MM_MYSQL_USER ? process.env.MM_MYSQL_USER :'root',
+                password: process.env.MM_MYSQL_PASSWORD ? process.env.MM_MYSQL_PASSWORD :'root'
             },
             redisConnection: {
-                address: '127.0.0.1',
-                port: 6379
+                address: process.env.MM_REDIS_ADDR ? process.env.MM_REDIS_ADDR : '127.0.0.1',
+                port: process.env.MM_REDIS_PORT ? Number(process.env.MM_REDIS_PORT) : 6379
             },
             webserver: {
-                listenPort: 1000
+                listenPort: process.env.MM_WEB_PORT ? Number(process.env.MM_WEB_PORT) : 1000
             }
         };
     }
