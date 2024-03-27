@@ -26,7 +26,8 @@ export class Webserver {
         });
 
         await server.listen({
-            port: Config.config.webserver.listenPort
+            port: Config.config.webserver.listenPort,
+            host: "0.0.0.0"
         });
         this.logger.log(`Webserver is listening at ${Config.config.webserver.listenPort}`);
     }
