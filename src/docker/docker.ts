@@ -51,9 +51,9 @@ export default class DockerManager {
             let s_prefix      = group.prefix;
             let s_addac       = group.addNoCheat;
             let s_portsection = group.portSection;
-            let s_lobbyzip    = group.worldZip;
-            let s_pluginfile  = group.plugin;
-            let s_pluginconfigpath = group.configPath;
+            let s_lobbyzip    = group.worldZip != "" ? group.worldZip : "Lobby_ARCADE.zip";
+            let s_pluginfile  = group.plugin != "" ? group.plugin : "Arcade.jar";
+            let s_pluginconfigpath = group.configPath != "" ? group.configPath : "Arcade";
 
             let serverNum: number = parseInt(serverName.split("-")[1]);
 
