@@ -63,9 +63,12 @@ export default class DockerManager {
                 name: serverName,
                 Image: Config.config.dockerConnection.javaImage,
                 HostConfig: {
+                    NetworkMode: "host",
+                    /*
                     PortBindings: {
                         [`${s_port}/tcp`]: [{ HostPort: `${s_port}` }]
                     },
+                    */
                     Mounts: [
                         {
                             Type: 'volume',
@@ -78,9 +81,11 @@ export default class DockerManager {
                 Volumes: {
                     [Config.config.dockerConnection.serverConfigMountPoint]: {}
                 },
+                /*
                 ExposedPorts: {
                     [`${s_port}/tcp`]: {}
                 },
+                */
                 Env: [
                     `MINEPLEX_PORT=${s_port}`,
                     `MINEPLEX_PREFIX=${s_prefix}`,
