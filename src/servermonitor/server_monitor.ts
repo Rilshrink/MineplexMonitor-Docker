@@ -152,6 +152,10 @@ export default class ServerMonitor {
             await DockerManager.removeServer(serverName); // Remove from docker
             await RedisManager.removeServer(serverName); // Remove from server status
             this.killServerList.delete(serverName);
+            this.serverTracker.delete(serverName);
+
+            // TODO: Check if MPS, COM or Event and delete the servergroup for it when removed.
+
             this.logger.log(`(${serverName}) Killed for: ${reason}`);
         });
 
