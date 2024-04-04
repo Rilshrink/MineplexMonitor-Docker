@@ -151,22 +151,7 @@ export default class ServerMonitor {
             this.serverTracker.set(key, OnlineServerStatus.Online);
         });
 
-        //this.logger.log(`${totalPlayers} player(s) playing across ${totalServers} servers`);
-
-        this.laggyServerList.forEach(async (reason: ServerRestartReason, serverName: string) => {
-            await DockerManager.restartServer(serverName);
-            this.laggyServerList.delete(serverName);
-            this.logger.log(`(${serverName}) Restarted for: ${reason}`); 
-        });
-            
-        this.killServerList.forEach(async (reason: ServerKilledReason, serverName: string) => {
-            await DockerManager.removeServer(serverName); // Remove from docker
-            await RedisManager.removeServer(serverName); // Remove from server status
-            this.killServerList.delete(serverName);
-            this.serverTracker.delete(serverName);
-
-            this.logger.log(`(${serverName}) Killed for: ${reason}`);
-        });
+        this.logger.log(`${totalPlayers} total player(s) playing across ${totalServers} server(s)`);
 
         const serverGroups = await RedisManager.instance.smembers('servergroups');
         serverGroups.forEach(async (serverGroup: string) => {
@@ -267,6 +252,20 @@ export default class ServerMonitor {
                 serversToAdd--;
             }
 
+        });
+
+        this.laggyServerList.forEach(async (reason: ServerRestartReason, serverName: string) => {
+            await DockerManager.restartServer(serverName);
+            this.laggyServerList.delete(serverName);
+            this.logger.log(`(${serverName}) Restarted for: ${reason}`); 
+        });
+            
+        this.killServerList.forEach(async (reason: ServerKilledReason, serverName: string) => {
+            await DockerManager.removeServer(serverName); // Remove from docker
+            await RedisManager.removeServer(serverName); // Remove from server status
+            this.killServerList.delete(serverName);
+            this.serverTracker.delete(serverName);
+            this.logger.log(`(${serverName}) Killed for: ${reason}`);
         });
 
         await sleep(5000); // TODO: Add custom delay
