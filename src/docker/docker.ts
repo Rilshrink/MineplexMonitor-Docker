@@ -54,9 +54,9 @@ export default class DockerManager {
             let s_lobbyzip    = group.worldZip;
             let s_pluginfile  = group.plugin;
 
-            let serverNum = parseInt(serverName.split("-")[1]);
+            let serverNum: number = parseInt(serverName.split("-")[1]);
 
-            let s_port = s_portsection + serverNum;
+            let s_port: number = Number(s_portsection) + Number(serverNum);
 
             let container = await DockerManager.instance.createContainer({
                 name: serverName,
