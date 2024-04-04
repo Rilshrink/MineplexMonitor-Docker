@@ -122,10 +122,13 @@ export default class RedisManager {
     public static async removeServerGroup(groupName: string) {
         const serverGroupKey = `servergroups.${groupName}`;
 
+        try {
+            await RedisManager.instance.srem(`servergroups`, groupName);
+        } catch(err) {}
+
         if(!(await RedisManager.instance.exists(serverGroupKey))) return;
 
         await RedisManager.instance.del(serverGroupKey);
-        await RedisManager.instance.srem(`servergroups`, groupName);
     }
 
     public static async registerServerGroup(group: ServerGroup) {
