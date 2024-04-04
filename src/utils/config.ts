@@ -48,10 +48,10 @@ export class Config {
             serverMonitor: {
                 serverAutoCreate: process.env.MM_MONITOR_AUTO_CREATE ? process.env.MM_MONITOR_AUTO_CREATE.toLowerCase() == 'true' : true,
                 mpsAutoCreate: process.env.MM_MONITOR_MPS_AUTO_CREATE ? process.env.MM_MONITOR_MPS_AUTO_CREATE.toLowerCase() == 'true' : true,
-                lobbyMinimumAvailableSlots: process.env.MM_MONITOR_LOBBY_MIN_SLOTS ? process.env.MM_MONITOR_LOBBY_MIN_SLOTS : 50,
+                lobbyMinimumAvailableSlots: process.env.MM_MONITOR_LOBBY_MIN_SLOTS ? Number(process.env.MM_MONITOR_LOBBY_MIN_SLOTS) : 50,
             },
             dashboard: {
-                listenPort: process.env.MM_DASHBOARD_PORT ? process.env.MM_DASHBOARD_PORT : 80
+                listenPort: process.env.MM_DASHBOARD_PORT ? Number(process.env.MM_DASHBOARD_PORT) : 80
             },
             redisConnection: {
                 address: process.env.MM_REDIS_ADDR ? process.env.MM_REDIS_ADDR : '127.0.0.1',
