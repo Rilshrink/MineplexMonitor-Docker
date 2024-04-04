@@ -91,6 +91,9 @@ export default class DockerManager {
                     `MINEPLEX_PLUGIN_CONFIG_PATH=${s_pluginconfigpath}`,
                     //
                     `MINEPLEX_WEB_SERVER_HOST=${Config.config.dockerConnection.webServerHost}`,
+                    `MINEPLEX_DATABASE_ADDR=${Config.config.databaseConnection.address}`,
+                    `MINEPLEX_DATABASE_USER=${Config.config.databaseConnection.username}`,
+                    `MINEPLEX_DATABASE_PASS=${Config.config.databaseConnection.password}`,
                     // 
                     `MINEPLEX_MOUNT_POINT=${Config.config.dockerConnection.serverConfigMountPoint}`,
                     `MINEPLEX_JARS_PATH=${Config.config.dockerConnection.serverJarsPath}`,
