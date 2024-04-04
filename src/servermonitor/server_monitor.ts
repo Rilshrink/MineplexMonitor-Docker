@@ -200,7 +200,7 @@ export default class ServerMonitor {
             });
 
             let serversToKill = (totalServers > requiredTotal && joinableServers > requiredJoinable) ? Math.min(joinableServers - requiredJoinable) : 0;
-            let serversToAdd = 0;
+            let serversToAdd = Math.max(0, Math.max(requiredTotal - totalServers, requiredJoinable - joinableServers));
             let serversToRestart = 0;
 
             if(group.name.toLowerCase() == "lobby") {
