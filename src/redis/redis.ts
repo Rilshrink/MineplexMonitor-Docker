@@ -61,26 +61,26 @@ export default class RedisManager {
 
         if(!serverGroups.includes("NANO")) {
             RedisManager.logger.log('Missing Nano group, adding.....');
-            const min = new ServerGroup('NANO', 'NANO', 25900);
-            min.arcadeGroup = true;
-            min.addNoCheat = true;
-            min.maxPlayers = 16;
-            min.minPlayers = 2;
-            min.hotbarInventory = true;
-            min.pvp = true;
-            min.mapVoting = true;
-            min.rewardAchievements = true;
-            min.rewardGems = true;
-            min.rewardItems = true;
-            min.rewardStats = true;
-            min.requiredTotalServers = 2;
-            min.requiredJoinableServers = 1;
-            min.gameAutoStart = true;
-            min.serverType = "Minigames";
-            min.plugin = "Nano.jar";
-            min.configPath = "Nano";
-            min.worldZip = "Lobby_NANO.zip";
-            RedisManager.registerServerGroup(min);
+            const nano = new ServerGroup('NANO', 'NANO', 25900);
+            nano.arcadeGroup = true;
+            nano.addNoCheat = true;
+            nano.maxPlayers = 16;
+            nano.minPlayers = 2;
+            nano.hotbarInventory = true;
+            nano.pvp = true;
+            nano.mapVoting = true;
+            nano.rewardAchievements = true;
+            nano.rewardGems = true;
+            nano.rewardItems = true;
+            nano.rewardStats = true;
+            nano.requiredTotalServers = 2;
+            nano.requiredJoinableServers = 1;
+            nano.gameAutoStart = true;
+            nano.serverType = "Minigames";
+            nano.plugin = "Nano.jar";
+            nano.configPath = "Nano";
+            nano.worldZip = "Lobby_NANO.zip";
+            RedisManager.registerServerGroup(nano);
         }
 
         RedisManager.logger.log(`There are currently ${serverGroups.length} groups: ${serverGroups.join(', ')}`);
