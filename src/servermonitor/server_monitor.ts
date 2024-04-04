@@ -164,13 +164,23 @@ export default class ServerMonitor {
                 let _emptyServers: MinecraftServer[] = [];
                 let _allServers: Map<string, MinecraftServer> = new Map<string, MinecraftServer>();
 
-                serverStatuses.forEach((server: MinecraftServer, key: string) => {
+                serverStatuses.forEach(async (server: MinecraftServer, key: string) => {
                     let serverName = server._name;
 
                     if(this.killServerList.has(serverName) || this.laggyServerList.has(serverName))
                         return;
+                    
+                    if(server._group == null || server._group == undefined) {
+                        this.logger.warn(`(${serverName}) Had a null group`);
+                        return;
+                    }
 
-                    if(server._group.toLowerCase() != group.prefix.toLowerCase()) {
+                    if(group.prefix == null || group.prefix == undefined) {
+                        this.logger.warn(`(${group.name}) Had a null prefix`);
+                    }
+
+                    if(server._group.toLowerCase() != 
+                       group.prefix.toLowerCase()) {
                         return;
                     }
 
