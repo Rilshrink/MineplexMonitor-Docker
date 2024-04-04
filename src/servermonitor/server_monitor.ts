@@ -132,8 +132,8 @@ export default class ServerMonitor {
                 }
             }
 
-            // If time hasn't updated for 35 seconds just assume it's dead :/
-            if((Date.now()) - parseInt(server._currentTime) > 35000) {
+            // If time hasn't updated for 70 seconds just assume it's dead :/
+            if((Date.now()) - parseInt(server._currentTime) > 70000) {
                 this.killServerList.set(serverName, ServerKilledReason.Dead);
             }
 
