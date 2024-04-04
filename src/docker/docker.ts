@@ -1,4 +1,5 @@
-import { Docker, Container } from 'dockerode' 
+import Dockerode, { Container } from 'dockerode' 
+import { DockerOptions } from 'dockerode';
 import { Config } from '../utils/config';
 import Logger from '../utils/log';
 import RedisManager from '../redis/redis';
@@ -6,11 +7,11 @@ import { MinecraftServer } from '../redis/minecraft_server_data';
 
 export default class DockerManager {
 
-    public static instance: Docker;
+    public static instance: Dockerode;
     public static readonly logger = new Logger('Docker');
 
     public static async init() {
-        DockerManager.instance = new Docker({
+        DockerManager.instance = new Dockerode({
             socketPath: '/var/run/docker.sock'
         });
     }
@@ -32,7 +33,7 @@ export default class DockerManager {
         try {
             const container = DockerManager.instance.getContainer(serverName);
             const info = await container.inspect();
-            return info.State.Health.Status === 'healthy';
+            return info.State.Health?.Status === 'healthy';
         } catch(err) {
             return false;
         }
@@ -57,7 +58,7 @@ export default class DockerManager {
 
             let s_port = s_portsection + serverNum;
 
-            let container = DockerManager.instance.createContainer({
+            let container = await DockerManager.instance.createContainer({
                 name: serverName,
                 Image: Config.config.dockerConnection.javaImage,
                 HostConfig: {
