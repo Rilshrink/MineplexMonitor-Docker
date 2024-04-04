@@ -47,10 +47,12 @@ export default class RedisManager {
             min.requiredTotalServers = 1;
             min.requiredJoinableServers = 1;
             min.gameAutoStart = true;
+            min.hotbarInventory = true;
             min.serverType = "Minigames";
             min.games = "Skywars,SurvivalGames"; // TODO: Add all mixed arcade games :)
             min.plugin = "Arcade.jar";
             min.worldZip = "Lobby_ARCADE.zip";
+            RedisManager.registerServerGroup(min);
         }
 
         if(!serverGroups.includes("NANO")) {
@@ -60,6 +62,7 @@ export default class RedisManager {
             min.addNoCheat = true;
             min.maxPlayers = 16;
             min.minPlayers = 2;
+            min.hotbarInventory = true;
             min.pvp = true;
             min.mapVoting = true;
             min.rewardAchievements = true;
@@ -72,6 +75,7 @@ export default class RedisManager {
             min.serverType = "Minigames";
             min.plugin = "Nano.jar";
             min.worldZip = "Lobby_ARCADE.zip";
+            RedisManager.registerServerGroup(min);
         }
 
         RedisManager.logger.log(`There are currently ${serverGroups.length} groups: ${serverGroups.join(', ')}`);
