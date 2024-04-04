@@ -28,7 +28,7 @@ export default class RedisManager {
             lobby.addNoCheat = true;
             lobby.maxPlayers = 50;
             lobby.plugin = "Hub.jar";
-            lobby.configPath = "Hub";
+            lobby.configPath = "plugins/Hub/";
             lobby.worldZip = "Lobby_HUB.zip";
             RedisManager.registerServerGroup(lobby);
         }
@@ -54,7 +54,7 @@ export default class RedisManager {
             min.serverType = "Minigames";
             min.games = "Skywars,SurvivalGames"; // TODO: Add all mixed arcade games :)
             min.plugin = "Arcade.jar";
-            min.configPath = "Arcade";
+            min.configPath = "plugins/Arcade/";
             min.worldZip = "Lobby_ARCADE.zip";
             RedisManager.registerServerGroup(min);
         }
@@ -78,7 +78,7 @@ export default class RedisManager {
             nano.gameAutoStart = true;
             nano.serverType = "Minigames";
             nano.plugin = "Nano.jar";
-            nano.configPath = "Nano";
+            nano.configPath = "plugins/Nano/";
             nano.worldZip = "Lobby_NANO.zip";
             RedisManager.registerServerGroup(nano);
         }
