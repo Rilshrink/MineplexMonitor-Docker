@@ -1,210 +1,275 @@
-import { Redis } from 'ioredis';
-import { Config } from '../utils/config';
+import RedisManager from '../redis/redis';
+import DockerManager from '../docker/docker';
+import { MinecraftServer } from '../redis/minecraft_server_data';
 import Logger from '../utils/log';
-import { MinecraftServer } from './minecraft_server_data';
-import { ServerGroup } from './server_group';
+import { ServerGroup } from '../redis/server_group';
+import { Config } from '../utils/config';
 
-export default class RedisManager {
-    public static instance: Redis;
+export enum ServerKilledReason {
+    Empty = "Empty",
+    Finished = "Finished",
+    Cleanup = "Cleanup",
+    SlowStartup = "Slow Startup",
+    Duplicate = "Duplicate",
+    Excess = "Excess",
+    Dead = "Dead"
+}
 
-    public static logger = new Logger('Redis');
+export enum ServerRestartReason {
+    Laggy = "Laggy",
+}
+
+export enum OnlineServerStatus {
+    Starting = "Starting",
+    Online = "Online",
+    Restarting = "Restarting",
+    Killed = "Killed",
+}
+
+function sleep(ms: number) {
+    return new Promise( resolve => setTimeout(resolve, ms) );
+}
+
+export default class ServerMonitor {
+
+    public static readonly logger: Logger = new Logger('ServerMonitor');
+
+    private static killServerList: Map<string, ServerKilledReason> = new Map<string, ServerKilledReason>();
+    private static laggyServerList: Map<string, ServerRestartReason> = new Map<string, ServerRestartReason>();
+    private static serverTracker: Map<string, OnlineServerStatus> = new Map<string, OnlineServerStatus>(); 
 
     public static async init() {
-        RedisManager.instance = new Redis({
-            host: Config.config.redisConnection.address,
-            port: Config.config.redisConnection.port
+        // Remove all hanging MPS / Community Servers
+
+        const serverGroups = await RedisManager.instance.smembers('servergroups');
+
+        serverGroups.forEach(async (serverGroup: string) => {
+            let group = await RedisManager.getServerGroupByName(serverGroup);
+
+            if(group == undefined || group.serverType == undefined) {
+                this.logger.warn(`(${serverGroup}) Dead server group`);
+                await RedisManager.removeServerGroup(serverGroup);
+                return;
+            }
+            
+            if(group.serverType.toLowerCase() == "player" ||
+               group.serverType.toLowerCase() == "community") {
+                await RedisManager.removeServerGroup(serverGroup);
+                this.logger.log(`Removed server group: ${serverGroup}`);
+            }
         });
 
-        this.loadServerGroups();
+        /*
+        // Cleanup servers
+        const serverStatuses: Map<string, MinecraftServer> = await RedisManager.getServerStatuses();
+        serverStatuses.forEach((server: MinecraftServer, key: string) => {
+            RedisManager.removeServer(server); 
+        });
+        */
+
+        await this.loop();
     }
 
-    public static async loadServerGroups() {
-        let serverGroups = await RedisManager.instance.smembers('servergroups');
-
-        if (!serverGroups.includes('Lobby')) {
-            RedisManager.logger.log('Missing Lobby group, adding....');
-            const lobby = new ServerGroup('Lobby', 'Lobby', 25700);
-            lobby.arcadeGroup = false;
-            lobby.addNoCheat = true;
-            lobby.maxPlayers = 50;
-            lobby.plugin = "Hub.jar";
-            lobby.configPath = "plugins/Hub/";
-            lobby.worldZip = "Lobby_HUB.zip";
-            RedisManager.registerServerGroup(lobby);
-        }
-
-        // Add default mixed arcade so you can easily get the games working.
-        if(!serverGroups.includes("MIN")) {
-            RedisManager.logger.log('Missing Mixed Arcade group, adding.....');
-            const min = new ServerGroup('MIN', 'MIN', 25800);
-            min.arcadeGroup = true;
-            min.addNoCheat = true;
-            min.maxPlayers = 16;
-            min.minPlayers = 2;
-            min.pvp = true;
-            min.mapVoting = true;
-            min.rewardAchievements = true;
-            min.rewardGems = true;
-            min.rewardItems = true;
-            min.rewardStats = true;
-            min.requiredTotalServers = 2;
-            min.requiredJoinableServers = 1;
-            min.gameAutoStart = true;
-            min.hotbarInventory = true;
-            min.serverType = "Minigames";
-            min.games = "Skywars,SurvivalGames"; // TODO: Add all mixed arcade games :)
-            min.plugin = "Arcade.jar";
-            min.configPath = "plugins/Arcade/";
-            min.worldZip = "Lobby_ARCADE.zip";
-            RedisManager.registerServerGroup(min);
-        }
-
-        if(!serverGroups.includes("NANO")) {
-            RedisManager.logger.log('Missing Nano group, adding.....');
-            const nano = new ServerGroup('NANO', 'NANO', 25900);
-            nano.arcadeGroup = true;
-            nano.addNoCheat = true;
-            nano.maxPlayers = 16;
-            nano.minPlayers = 2;
-            nano.hotbarInventory = true;
-            nano.pvp = true;
-            nano.mapVoting = true;
-            nano.rewardAchievements = true;
-            nano.rewardGems = true;
-            nano.rewardItems = true;
-            nano.rewardStats = true;
-            nano.requiredTotalServers = 2;
-            nano.requiredJoinableServers = 1;
-            nano.gameAutoStart = true;
-            nano.serverType = "Minigames";
-            nano.plugin = "Nano.jar";
-            nano.configPath = "plugins/Nano/";
-            nano.worldZip = "Lobby_NANO.zip";
-            RedisManager.registerServerGroup(nano);
-        }
-
-        RedisManager.logger.log(`There are currently ${serverGroups.length} groups: ${serverGroups.join(', ')}`);
-    }
-
-    public static async getServerStatuses() {
-        const serverStatuses: Map<string, MinecraftServer> = new Map<string, MinecraftServer>();
-        const serverStatusKeys = await RedisManager.instance.keys('serverstatus.minecraft.US.*');
-        for (const serverKey of serverStatusKeys) {
-            serverStatuses.set(serverKey, JSON.parse((await RedisManager.instance.get(serverKey))!) as MinecraftServer);
-        }
-        return serverStatuses;
-    }
-
-    public static async getServerGroupByName(name: string): Promise<ServerGroup> {
-        const serverGroupKey = `servergroups.${name}`;
-        return (await RedisManager.instance.hgetall(serverGroupKey)) as unknown as ServerGroup; //insane casting LMAOOO
-    }
-
-    public static async registerServer(serverName: string, serverGroup: string, serverPort: number) {
-        if(await RedisManager.instance.exists(serverName)) return;
-        
-        let server: MinecraftServer = {
-            _name: serverName,
-            _group: serverGroup,
-            _motd: "Starting",
-            _playerCount: 0,
-            _maxPlayerCount: 0,
-            _tps: 0,
-            _ram: 0,
-            _maxRam: 0,
-            _publicAddress: "",
-            _port: serverPort,
-            _donorsOnline: 0,
-            _startUpDate: "",
-            _currentTime: "",
+    public static async loop() {
+        let checkServerUptime = (server: MinecraftServer) => {
+            return ((Date.now()) / 1000) - parseInt(server._startUpDate) as number;
         };
 
-        await RedisManager.instance.set(`serverstatus.minecraft.US.${serverName}`, JSON.stringify(server));
+        let checkServerEmpty = (server: MinecraftServer) => {
+            return (server._playerCount == 0) as boolean;
+        };
+        
+        let checkServerJoinable = (server: MinecraftServer) => {
+            let motd = server._motd.toLowerCase();
+            if((motd == "" || motd.includes("voting") || motd.includes("starting") || motd.includes("waiting") || motd.includes("always_open")) && 
+               server._playerCount < server._maxPlayerCount) {
+                let slots = server._maxPlayerCount - server._playerCount;
+                return ((motd !== "") || (slots > 20)) as boolean;
+            }
+            return false;
+        };
+
+        let ignoreServer = (serverGroup: string) => {
+            return serverGroup.toLowerCase() === "clans" || serverGroup.toLowerCase() === "testing";
+        };
+
+        let totalPlayers: number = 0;
+        let totalServers: number = 0;
+        const serverStatuses: Map<string, MinecraftServer> = await RedisManager.getServerStatuses();
+
+        serverStatuses.forEach((server: MinecraftServer, key: string) => {
+            let serverName = server._name;
+            totalPlayers += server._playerCount;
+            totalServers += 1;
+
+            if(this.killServerList.has(serverName) || this.laggyServerList.has(serverName)) {
+                return; // Server is waiting to be killed or restarted
+            }
+
+            if(server._motd.toLowerCase().includes("starting")) {
+                return;
+            }
+
+            if(!ignoreServer(server._group)) {
+                if(server._motd.toLowerCase().includes("finished") || 
+                    (server._group.toLowerCase() == "ultrahardcore" && 
+                    server._motd.toLowerCase().includes("restarting") 
+                     && server._playerCount == 0)) {
+                    this.killServerList.set(serverName, ServerKilledReason.Finished);
+                    this.serverTracker.set(serverName, OnlineServerStatus.Killed);
+                    return;
+                }
+            }
+
+            if(server._tps <= 17) {
+                if(server._tps <= 10) {
+                    if(!this.laggyServerList.has(serverName)) {
+                        this.laggyServerList.set(serverName, ServerRestartReason.Laggy);
+                        this.serverTracker.set(serverName, OnlineServerStatus.Restarting);
+                    }
+                } else {
+                    this.logger.warn(`(${server._name}) Running poorly at ${server._tps} TPS`);
+                }
+            }
+
+            // If time hasn't updated for 70 seconds just assume it's dead :/
+            if((Date.now()) - parseInt(server._currentTime) > 70000) {
+                this.killServerList.set(serverName, ServerKilledReason.Dead);
+            }
+
+            this.serverTracker.set(key, OnlineServerStatus.Online);
+        });
+
+        //this.logger.log(`${totalPlayers} player(s) playing across ${totalServers} servers`);
+
+        this.laggyServerList.forEach(async (reason: ServerRestartReason, serverName: string) => {
+            await DockerManager.restartServer(serverName);
+            this.laggyServerList.delete(serverName);
+            this.logger.log(`(${serverName}) Restarted for: ${reason}`); 
+        });
+            
+        this.killServerList.forEach(async (reason: ServerKilledReason, serverName: string) => {
+            await DockerManager.removeServer(serverName); // Remove from docker
+            await RedisManager.removeServer(serverName); // Remove from server status
+            this.killServerList.delete(serverName);
+            this.serverTracker.delete(serverName);
+
+            // TODO: Check if MPS, COM or Event and delete the servergroup for it when removed.
+            let serverGroup = await RedisManager.getServerGroupByName(serverName.split("-")[0]); // Hacky but works for now
+            if(serverGroup != null && serverGroup != undefined) {
+                if(serverGroup.serverType.toLowerCase() == "player" ||
+                   serverGroup.serverType.toLowerCase() == "community") {
+                    await RedisManager.removeServerGroup(serverGroup.name);
+                    this.logger.log(`Removed server group: ${serverGroup.name} because server got killed.`);
+                }
+            }
+
+            this.logger.log(`(${serverName}) Killed for: ${reason}`);
+        });
+
+        const serverGroups = await RedisManager.instance.smembers('servergroups');
+        serverGroups.forEach(async (serverGroup: string) => {
+            let group = await RedisManager.getServerGroupByName(serverGroup);
+
+            if(group == undefined || group.serverType == undefined) {
+                this.logger.warn(`(${serverGroup}) Dead server group`);
+                return;
+            }
+                
+            let requiredTotal = group.requiredTotalServers ? group.requiredTotalServers : 1;
+            let requiredJoinable = group.requiredJoinableServers ? group.requiredJoinableServers : 1;
+            let joinableServers = 0;
+            let serverCount = 0;
+            let emptyServers = 0;
+            let playerCount = 0;
+
+            let _emptyServers: MinecraftServer[] = [];
+            let _allServers: Map<string, MinecraftServer> = new Map<string, MinecraftServer>();
+
+            serverStatuses.forEach(async (server: MinecraftServer, key: string) => {
+                let serverName = server._name;
+
+                if(this.killServerList.has(serverName) || this.laggyServerList.has(serverName))
+                    return;
+
+                if(server._group.toLowerCase() != 
+                    group.prefix.toLowerCase()) {
+                    return;
+                }
+
+                if(checkServerJoinable(server) || server._group.toLowerCase() == "lobby") {
+                    joinableServers++;
+                } else {
+                    //this.logger.debug(`(${serverName}) Not joinable, players: ${server._playerCount}, maxPlayers: ${server._maxPlayerCount}, motd: ${server._motd}`);
+                }
+
+                if(checkServerEmpty(server)) {
+                    emptyServers++;
+                    _emptyServers.push(server);
+                }
+                    
+                _allServers.set(serverName, server);
+                playerCount += server._playerCount;
+                serverCount++;
+            });
+
+            let serversToKill = (totalServers > requiredTotal && joinableServers > requiredJoinable) ? Math.min(joinableServers - requiredJoinable, _emptyServers.length) : 0;
+            let serversToAdd = Math.max(0, Math.max(requiredTotal - totalServers, requiredJoinable - joinableServers));
+            let serversToRestart = 0;
+
+            //this.logger.debug(`(${serverGroup}) Servers to add: ${serversToAdd}`);
+            //this.logger.debug(`(${serverGroup}) Servers to kill: ${serversToKill}`);
+            //this.logger.debug(`(${serverGroup}) RequiredTotal: ${requiredTotal}, totalServers: ${totalServers}, requiredJoinable: ${requiredJoinable}, joinableServers: ${joinableServers}`);
+            /*
+            if(group.name.toLowerCase() == "lobby") {
+                let availableSlots = group.maxPlayers - playerCount;
+
+                let minimumSlots = Config.config.serverMonitor.lobbyMinimumAvailableSlots;
+                if(availableSlots < minimumSlots) {
+                    serversToAdd = Math.floor(Math.max(1, (minimumSlots - availableSlots) / group.maxPlayers));
+                    serversToKill = 0;
+                } else if(serversToKill > 0){
+                    serversToKill = Math.min(serversToKill, (availableSlots - minimumSlots) / 50);
+                } else if(serversToAdd == 0 && joinableServers > requiredJoinable && totalServers > requiredTotal) {
+                    serversToRestart++;
+                    // What's the point of this/???
+                }
+            }
+            */
+
+            if(ignoreServer(group.name))
+                return;
+
+            while(serversToKill > 0) {
+                if(_emptyServers.length <= 0) {
+                    this.logger.warn(`(${group.name}) No empty servers to kill`);
+                    break;
+                }
+                let serverToKill = _emptyServers[_emptyServers.length - 1];
+                this.killServerList.set(serverToKill._name, ServerKilledReason.Excess);
+                this.serverTracker.set(serverToKill._name, OnlineServerStatus.Killed);
+                serversToKill--;
+            }
+
+            while(serversToAdd > 0) {
+                let serverNum = 1;
+                while(_allServers.has(`${group.prefix}-${serverNum}`)) {
+                    serverNum++;
+                }
+                let serverName = `${group.prefix}-${serverNum}`;
+                if(this.serverTracker.has(serverName)) {
+                    this.logger.log(`(${serverName}) Waiting to finish starting...`);
+                } else {
+                    await DockerManager.createServer(group.prefix, serverName);
+                    this.serverTracker.set(serverName, OnlineServerStatus.Starting);
+                }
+                serversToAdd--;
+            }
+
+        });
+
+        await sleep(5000); // TODO: Add custom delay
+        await ServerMonitor.loop();
     }
 
-    public static async removeServer(serverName: string) {
-        const serverStatusKey = `serverstatus.minecraft.US.${serverName}`;
-        if(!await RedisManager.instance.exists(serverStatusKey)) return;
-        await RedisManager.instance.del(serverStatusKey);
-    }
-
-    public static async removeServerGroup(groupName: string) {
-        const serverGroupKey = `servergroups.${groupName}`;
-
-        try {
-            await RedisManager.instance.srem(`servergroups`, groupName);
-        } catch(err) {}
-
-        if(!(await RedisManager.instance.exists(serverGroupKey))) return;
-
-        await RedisManager.instance.del(serverGroupKey);
-    }
-
-    public static async registerServerGroup(group: ServerGroup) {
-        const serverGroupKey = `servergroups.${group.name}`;
-
-        if (await RedisManager.instance.exists(serverGroupKey)) return;
-
-        await RedisManager.instance.sadd('servergroups', group.name);
-        await RedisManager.instance.hsetnx(serverGroupKey, 'name', group.name);
-        await RedisManager.instance.hsetnx(serverGroupKey, 'host', group.host);
-        await RedisManager.instance.hsetnx(serverGroupKey, 'prefix', group.prefix);
-
-        await RedisManager.instance.hsetnx(serverGroupKey, 'minPlayers', group.minPlayers);
-        await RedisManager.instance.hsetnx(serverGroupKey, 'maxPlayers', group.maxPlayers);
-
-        await RedisManager.instance.hsetnx(serverGroupKey, 'ram', group.requiredRam);
-        await RedisManager.instance.hsetnx(serverGroupKey, 'cpu', group.requiredCpu);
-
-        await RedisManager.instance.hsetnx(serverGroupKey, 'joinableServers', group.requiredJoinableServers);
-        await RedisManager.instance.hsetnx(serverGroupKey, 'totalServers', group.requiredTotalServers);
-
-        await RedisManager.instance.hsetnx(serverGroupKey, 'uptimes', group.uptimes);
-
-        await RedisManager.instance.hsetnx(serverGroupKey, 'arcadeGroup', String(group.arcadeGroup));
-
-        await RedisManager.instance.hsetnx(serverGroupKey, 'worldZip', group.worldZip);
-        await RedisManager.instance.hsetnx(serverGroupKey, 'plugin', group.plugin);
-        await RedisManager.instance.hsetnx(serverGroupKey, 'configPath', group.configPath);
-
-        await RedisManager.instance.hsetnx(serverGroupKey, 'portSection', group.portSection);
-
-        await RedisManager.instance.hsetnx(serverGroupKey, 'pvp', String(group.pvp));
-        await RedisManager.instance.hsetnx(serverGroupKey, 'tournament', String(group.tournament));
-        await RedisManager.instance.hsetnx(serverGroupKey, 'tournamentPoints', String(group.tournamentPoints));
-
-        await RedisManager.instance.hsetnx(serverGroupKey, 'teamRejoin', String(group.teamRejoin));
-        await RedisManager.instance.hsetnx(serverGroupKey, 'teamAutoJoin', String(group.teamAutoJoin));
-        await RedisManager.instance.hsetnx(serverGroupKey, 'teamForceBalance', String(group.teamForceBalance));
-        await RedisManager.instance.hsetnx(serverGroupKey, 'gameAutoStart', String(group.gameAutoStart));
-        await RedisManager.instance.hsetnx(serverGroupKey, 'gameTimeout', String(group.gameTimeout));
-        await RedisManager.instance.hsetnx(serverGroupKey, 'gameVoting', String(group.gameVoting));
-
-        await RedisManager.instance.hsetnx(serverGroupKey, 'rewardGems', String(group.rewardGems));
-        await RedisManager.instance.hsetnx(serverGroupKey, 'rewardItems', String(group.rewardItems));
-        await RedisManager.instance.hsetnx(serverGroupKey, 'rewardStats', String(group.rewardStats));
-        await RedisManager.instance.hsetnx(serverGroupKey, 'rewardAchievements', String(group.rewardAchievements));
-
-        await RedisManager.instance.hsetnx(serverGroupKey, 'hotbarInventory', String(group.hotbarInventory));
-        await RedisManager.instance.hsetnx(serverGroupKey, 'hotbarHubClock', String(group.hotbarHubClock));
-        await RedisManager.instance.hsetnx(serverGroupKey, 'playerKickIdle', String(group.playerKickIdle));
-        await RedisManager.instance.hsetnx(serverGroupKey, 'hardMaxPlayerCap', String(group.hardMaxPlayerCap));
-
-        await RedisManager.instance.hsetnx(serverGroupKey, 'games', group.games);
-        await RedisManager.instance.hsetnx(serverGroupKey, 'modes', group.modes);
-        await RedisManager.instance.hsetnx(serverGroupKey, 'boosterGroup', group.boosterGroup);
-        await RedisManager.instance.hsetnx(serverGroupKey, 'serverType', group.serverType);
-
-        await RedisManager.instance.hsetnx(serverGroupKey, 'addNoCheat', String(group.addNoCheat));
-        await RedisManager.instance.hsetnx(serverGroupKey, 'addWorldEdit', String(group.addWorldEdit));
-        await RedisManager.instance.hsetnx(serverGroupKey, 'whitelist', String(group.whitelist));
-        await RedisManager.instance.hsetnx(serverGroupKey, 'staffOnly', String(group.staffOnly));
-
-        await RedisManager.instance.hsetnx(serverGroupKey, 'resourcePack', group.resourcePack);
-        await RedisManager.instance.hsetnx(serverGroupKey, 'npcName', group.npcName);
-        await RedisManager.instance.hsetnx(serverGroupKey, 'portalBottomCornerLocation', group.portalBottomCornerLocation);
-        await RedisManager.instance.hsetnx(serverGroupKey, 'portalTopCornerLocation', group.portalTopCornerLocation);
-        await RedisManager.instance.hsetnx(serverGroupKey, 'teamServerKey', group.teamServerKey);
-        await RedisManager.instance.hsetnx(serverGroupKey, 'region', group.region);
-    }
 }
