@@ -81,7 +81,7 @@ export default class ServerMonitor {
         
         let checkServerJoinable = (server: MinecraftServer) => {
             let motd = server._motd.toLowerCase();
-            if((motd == "" || motd == "voting" || motd == "starting" || motd == "waiting" || motd == "always_open") && 
+            if((motd == "" || motd.includes("voting") || motd.includes("starting") || motd.includes("waiting") || motd.includes("always_open")) && 
                server._playerCount < server._maxPlayerCount) {
                 let slots = server._maxPlayerCount - server._playerCount;
                 return ((motd !== "") || (slots > 20)) as boolean;
@@ -188,7 +188,7 @@ export default class ServerMonitor {
                 if(checkServerJoinable(server)) {
                     joinableServers++;
                 } else {
-                    this.logger.debug(`(${serverName}) Not joinable, players: ${server._playerCount}, maxPlayers: ${server._maxPlayerCount}, motd: ${server._motd}`);
+                    //this.logger.debug(`(${serverName}) Not joinable, players: ${server._playerCount}, maxPlayers: ${server._maxPlayerCount}, motd: ${server._motd}`);
                 }
 
                 if(checkServerEmpty(server)) {
