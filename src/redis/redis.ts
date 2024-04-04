@@ -125,7 +125,7 @@ export default class RedisManager {
         if(!(await RedisManager.instance.exists(serverGroupKey))) return;
 
         await RedisManager.instance.del(serverGroupKey);
-        await RedisManager.instance.hdel(serverGroupKey);
+        await RedisManager.instance.srem(`servergroups`, groupName);
     }
 
     public static async registerServerGroup(group: ServerGroup) {
