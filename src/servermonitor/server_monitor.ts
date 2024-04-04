@@ -181,7 +181,7 @@ export default class ServerMonitor {
                     return;
 
                 if(server._group.toLowerCase() != 
-                    group.name.toLowerCase()) {
+                    group.prefix.toLowerCase()) {
                     return;
                 }
 
@@ -199,14 +199,14 @@ export default class ServerMonitor {
                 serverCount++;
             });
 
-            let serversToKill = (totalServers > requiredTotal && joinableServers > requiredJoinable) ? Math.min(joinableServers - requiredJoinable) : 0;
+            let serversToKill = (totalServers > requiredTotal && joinableServers > requiredJoinable) ? Math.min(joinableServers - requiredJoinable, _emptyServers.length) : 0;
             let serversToAdd = Math.max(0, Math.max(requiredTotal - totalServers, requiredJoinable - joinableServers));
             let serversToRestart = 0;
 
-            //this.logger.debug(`(${serverGroup}) Servers to add: ${serversToAdd}`);
-            //this.logger.debug(`(${serverGroup}) Servers to kill: ${serversToKill}`);
-            //this.logger.debug(`(${serverGroup}) RequiredTotal: ${requiredTotal}, totalServers: ${totalServers}, requiredJoinable: ${requiredJoinable}, joinableServers: ${joinableServers}`);
-
+            this.logger.debug(`(${serverGroup}) Servers to add: ${serversToAdd}`);
+            this.logger.debug(`(${serverGroup}) Servers to kill: ${serversToKill}`);
+            this.logger.debug(`(${serverGroup}) RequiredTotal: ${requiredTotal}, totalServers: ${totalServers}, requiredJoinable: ${requiredJoinable}, joinableServers: ${joinableServers}`);
+            /*
             if(group.name.toLowerCase() == "lobby") {
                 let availableSlots = group.maxPlayers - playerCount;
 
@@ -221,6 +221,7 @@ export default class ServerMonitor {
                         // What's the point of this/???
                 }
             }
+            */
 
             if(ignoreServer(group.name))
                 return;
