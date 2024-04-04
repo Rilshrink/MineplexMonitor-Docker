@@ -119,12 +119,13 @@ export default class RedisManager {
         await RedisManager.instance.del(serverStatusKey);
     }
 
-    public static async removeServerGroup(group: ServerGroup) {
-        const serverGroupKey = `servergroups.${group.name}`;
+    public static async removeServerGroup(groupName: string) {
+        const serverGroupKey = `servergroups.${groupName}`;
 
         if(!(await RedisManager.instance.exists(serverGroupKey))) return;
 
         await RedisManager.instance.del(serverGroupKey);
+        await RedisManager.instance.hdel(serverGroupKey);
     }
 
     public static async registerServerGroup(group: ServerGroup) {
