@@ -81,7 +81,7 @@ export default class ServerMonitor {
         
         let checkServerJoinable = (server: MinecraftServer) => {
             let motd = server._motd.toLowerCase();
-            if((motd === "" || motd === "voting" || motd === "starting" || motd === "waiting" || motd === "always_open") && 
+            if((motd == "" || motd == "voting" || motd == "starting" || motd == "waiting" || motd == "always_open") && 
                server._playerCount < server._maxPlayerCount) {
                 let slots = server._maxPlayerCount - server._playerCount;
                 return ((motd !== "") || (slots > 20)) as boolean;
@@ -187,6 +187,8 @@ export default class ServerMonitor {
 
                 if(checkServerJoinable(server)) {
                     joinableServers++;
+                } else {
+                    this.logger.debug(`(${serverName}) Not joinable, players: ${server._playerCount}, maxPlayers: ${server._maxPlayerCount}, motd: ${server._motd}`);
                 }
 
                 if(checkServerEmpty(server)) {
@@ -203,9 +205,10 @@ export default class ServerMonitor {
             let serversToAdd = Math.max(0, Math.max(requiredTotal - totalServers, requiredJoinable - joinableServers));
             let serversToRestart = 0;
 
-            this.logger.debug(`(${serverGroup}) Servers to add: ${serversToAdd}`);
-            this.logger.debug(`(${serverGroup}) Servers to kill: ${serversToKill}`);
-            this.logger.debug(`(${serverGroup}) RequiredTotal: ${requiredTotal}, totalServers: ${totalServers}, requiredJoinable: ${requiredJoinable}, joinableServers: ${joinableServers}`);
+            //this.logger.debug(`(${serverGroup}) Servers to add: ${serversToAdd}`);
+            //this.logger.debug(`(${serverGroup}) Servers to kill: ${serversToKill}`);
+            //this.logger.debug(`(${serverGroup}) RequiredTotal: ${requiredTotal}, totalServers: ${totalServers}, requiredJoinable: ${requiredJoinable}, joinableServers: ${joinableServers}`);
+            
             /*
             if(group.name.toLowerCase() == "lobby") {
                 let availableSlots = group.maxPlayers - playerCount;
@@ -254,7 +257,7 @@ export default class ServerMonitor {
 
         });
 
-        await sleep(2000); // TODO: Add custom delay
+        await sleep(5000); // TODO: Add custom delay
         await ServerMonitor.loop();
     }
 
