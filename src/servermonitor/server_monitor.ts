@@ -43,12 +43,12 @@ export default class ServerMonitor {
 
         const serverGroups = await RedisManager.instance.smembers('servergroups');
 
-        serverGroups.forEach((serverGroup: unknown) => {
-            let group = serverGroup as ServerGroup;
+        serverGroups.forEach(async (serverGroup: string) => {
+            let group = await RedisManager.getServerGroupByName(serverGroup);
             
             if(group.serverType.toLowerCase() == "player" ||
                group.serverType.toLowerCase() == "community") {
-                RedisManager.removeServerGroup(group);
+                await RedisManager.removeServerGroup(group);
                 this.logger.log(`Removed server group: ${group.name}`);
             }
         });
@@ -151,8 +151,8 @@ export default class ServerMonitor {
             });
 
             const serverGroups = await RedisManager.instance.smembers('servergroups');
-            serverGroups.forEach(async (serverGroup: unknown) => {
-                let group = serverGroup as ServerGroup;
+            serverGroups.forEach(async (serverGroup: string) => {
+                let group = await RedisManager.getServerGroupByName(serverGroup);
                 
                 let requiredTotal = group.requiredTotalServers;
                 let requiredJoinable = group.requiredJoinableServers;
