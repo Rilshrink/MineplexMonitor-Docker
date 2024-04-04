@@ -158,6 +158,11 @@ export default class ServerMonitor {
             const serverGroups = await RedisManager.instance.smembers('servergroups');
             serverGroups.forEach(async (serverGroup: string) => {
                 let group = await RedisManager.getServerGroupByName(serverGroup);
+
+                if(group == undefined || group.serverType == undefined) {
+                    this.logger.warn(`(${serverGroup}) Dead server group`);
+                    return;
+                }
                 
                 let requiredTotal = group.requiredTotalServers;
                 let requiredJoinable = group.requiredJoinableServers;
@@ -174,15 +179,6 @@ export default class ServerMonitor {
 
                     if(this.killServerList.has(serverName) || this.laggyServerList.has(serverName))
                         return;
-                    
-                    if(server._group == null || server._group == undefined) {
-                        this.logger.warn(`(${serverName}) Had a null group`);
-                        return;
-                    }
-
-                    if(group.prefix == null || group.prefix == undefined) {
-                        this.logger.warn(`(${group.name}) Had a null prefix`);
-                    }
 
                     if(server._group.toLowerCase() != 
                        group.prefix.toLowerCase()) {
