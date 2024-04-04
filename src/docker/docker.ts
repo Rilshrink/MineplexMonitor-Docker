@@ -29,6 +29,16 @@ export default class DockerManager {
         }
     }
 
+    public static async checkServerRunning(serverName: string): Promise<boolean> {
+        try {
+            const container = DockerManager.instance.getContainer(serverName);
+            const info = await container.inspect();
+            return info.State.Running;
+        } catch(err) {
+            return false;
+        }
+    }
+
     public static async checkServerHealth(serverName: string): Promise<boolean> {
         try {
             const container = DockerManager.instance.getContainer(serverName);
@@ -140,7 +150,7 @@ export default class DockerManager {
 
         try {
             const container = DockerManager.instance.getContainer(serverName);
-            if(await this.checkServerHealth(serverName)) { // TODO: Better check
+            if(await this.checkServerRunning(serverName)) {
                 await container.stop();
             }
             await container.remove();
