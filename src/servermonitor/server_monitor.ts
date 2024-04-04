@@ -48,13 +48,14 @@ export default class ServerMonitor {
 
             if(group == undefined || group.serverType == undefined) {
                 this.logger.warn(`(${serverGroup}) Dead server group`);
+                await RedisManager.removeServerGroup(serverGroup);
                 return;
             }
             
             if(group.serverType.toLowerCase() == "player" ||
                group.serverType.toLowerCase() == "community") {
-                await RedisManager.removeServerGroup(group);
-                this.logger.log(`Removed server group: ${group.name}`);
+                await RedisManager.removeServerGroup(serverGroup);
+                this.logger.log(`Removed server group: ${serverGroup}`);
             }
         });
 
