@@ -181,7 +181,7 @@ export default class ServerMonitor {
                     return;
 
                 if(server._group.toLowerCase() != 
-                    group.prefix.toLowerCase()) {
+                    group.name.toLowerCase()) {
                     return;
                 }
 
@@ -194,7 +194,7 @@ export default class ServerMonitor {
                     _emptyServers.push(server);
                 }
                     
-                _allServers.set(key, server);
+                _allServers.set(serverName, server);
                 playerCount += server._playerCount;
                 serverCount++;
             });
