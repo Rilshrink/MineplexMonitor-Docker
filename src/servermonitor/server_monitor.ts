@@ -213,7 +213,6 @@ export default class ServerMonitor {
             //this.logger.debug(`(${serverGroup}) Servers to kill: ${serversToKill}`);
             //this.logger.debug(`(${serverGroup}) RequiredTotal: ${requiredTotal}, totalServers: ${totalServers}, requiredJoinable: ${requiredJoinable}, joinableServers: ${joinableServers}`);
             
-            /*
             if(group.name.toLowerCase() == "lobby") {
                 let availableSlots = group.maxPlayers - playerCount;
 
@@ -222,13 +221,12 @@ export default class ServerMonitor {
                     serversToAdd = Math.floor(Math.max(1, (minimumSlots - availableSlots) / group.maxPlayers));
                     serversToKill = 0;
                 } else if(serversToKill > 0){
-                    serversToKill = Math.min(serversToKill, (availableSlots - minimumSlots) / 80);
+                    serversToKill = Math.min(serversToKill, (availableSlots - minimumSlots) / 50);
                 } else if(serversToAdd == 0 && joinableServers > requiredJoinable && totalServers > requiredTotal) {
                     serversToRestart++;
-                        // What's the point of this/???
+                    // What's the point of this/???
                 }
             }
-            */
 
             if(ignoreServer(group.name))
                 return;
