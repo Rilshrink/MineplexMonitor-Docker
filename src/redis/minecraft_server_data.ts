@@ -12,7 +12,7 @@ export type MinecraftServer = {
     _donorsOnline: number;
     _startUpDate: string; //keep these as string!
     _currentTime: string;
-};
+}; 
 
 export class DedicatedServer {
     constructor(

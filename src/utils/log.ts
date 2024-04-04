@@ -18,26 +18,26 @@ export default class Logger {
     }
 
     public start(msg: string) {
-        this.logRaw(msg, chalk.hex('#76db91')(`[ 🟢 ]`));
+        this.logRaw(msg, chalk.hex('#76db91')(`[START]`));
     }
 
     public stop(msg: string) {
-        this.logRaw(msg, chalk.hex('#e87963')(`[ 🔴 ]`));
+        this.logRaw(msg, chalk.hex('#e87963')(`[STOP]`));
     }
 
     public debug(data: any) {
-        this.logRaw(data, chalk.hex('#6b8daa')(`[ 🔨 ]`));
+        this.logRaw(data, chalk.hex('#6b8daa')(`[DEBUG]`));
     }
 
     public log(data: any) {
-        this.logRaw(data, chalk.hex('#9eb5ef')(`[ 🔔 ] `));
+        this.logRaw(data, chalk.hex('#9eb5ef')(`[*] `));
     }
 
     public warn(data: any) {
-        this.logRaw(data, chalk.hex('#ead672')(`[ ⚠️ ]`));
+        this.logRaw(data, chalk.hex('#ead672')(`[!]`));
     }
 
     public error(data: any) {
-        this.logRaw(data, chalk.hex('#e55252')(`[ ❗ ]`));
+        this.logRaw(data, chalk.hex('#e55252')(`[-]`));
     }
 }

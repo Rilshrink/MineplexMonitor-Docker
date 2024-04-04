@@ -81,7 +81,7 @@ export default class DonationRepository {
     }
     public static async RewardGems(token: CurrencyRewardToken): Promise<boolean> {
         const account = await AccountRepository.getAccountByName(token.Name);
-        if (!account || (account.coins! + token.Amount < 0)) return false;
+        if (!account || (account.gems! + token.Amount < 0)) return false;
 
         await Accounts.update(
             {

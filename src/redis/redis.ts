@@ -19,14 +19,61 @@ export default class RedisManager {
     }
 
     public static async loadServerGroups() {
-        const serverGroups = await RedisManager.instance.smembers('servergroups');
-        if (serverGroups.length === 0 || !serverGroups.includes('Lobby')) {
+        let serverGroups = await RedisManager.instance.smembers('servergroups');
+        if (!serverGroups.includes('Lobby')) {
             RedisManager.logger.log('Missing Lobby group, adding....');
             const lobby = new ServerGroup('Lobby', 'Lobby', 25700);
             lobby.arcadeGroup = false;
+            lobby.addNoCheat = true;
             lobby.maxPlayers = 50;
+            lobby.plugin = "Hub.jar";
+            lobby.worldZip = "Lobby_HUB.zip";
             RedisManager.registerServerGroup(lobby);
         }
+        // Add default mixed arcade so you can easily get the games working.
+        if(!serverGroups.includes("MIN")) {
+            RedisManager.logger.log('Missing Mixed Arcade group, adding.....');
+            const min = new ServerGroup('MIN', 'MIN', 25800);
+            min.arcadeGroup = true;
+            min.addNoCheat = true;
+            min.maxPlayers = 16;
+            min.minPlayers = 2;
+            min.pvp = true;
+            min.mapVoting = true;
+            min.rewardAchievements = true;
+            min.rewardGems = true;
+            min.rewardItems = true;
+            min.rewardStats = true;
+            min.requiredTotalServers = 1;
+            min.requiredJoinableServers = 1;
+            min.gameAutoStart = true;
+            min.serverType = "Minigames";
+            min.games = "Skywars,SurvivalGames"; // TODO: Add all mixed arcade games :)
+            min.plugin = "Arcade.jar";
+            min.worldZip = "Lobby_ARCADE.zip";
+        }
+
+        if(!serverGroups.includes("NANO")) {
+            RedisManager.logger.log('Missing Nano group, adding.....');
+            const min = new ServerGroup('NANO', 'NANO', 25800);
+            min.arcadeGroup = true;
+            min.addNoCheat = true;
+            min.maxPlayers = 16;
+            min.minPlayers = 2;
+            min.pvp = true;
+            min.mapVoting = true;
+            min.rewardAchievements = true;
+            min.rewardGems = true;
+            min.rewardItems = true;
+            min.rewardStats = true;
+            min.requiredTotalServers = 1;
+            min.requiredJoinableServers = 1;
+            min.gameAutoStart = true;
+            min.serverType = "Minigames";
+            min.plugin = "Nano.jar";
+            min.worldZip = "Lobby_ARCADE.zip";
+        }
+
         RedisManager.logger.log(`There are currently ${serverGroups.length} groups: ${serverGroups.join(', ')}`);
     }
 
@@ -42,6 +89,42 @@ export default class RedisManager {
     public static async getServerGroupByName(name: string): Promise<ServerGroup> {
         const serverGroupKey = `servergroups.${name}`;
         return (await RedisManager.instance.hgetall(serverGroupKey)) as unknown as ServerGroup; //insane casting LMAOOO
+    }
+
+    public static async registerServer(serverName: string, serverGroup: string, serverPort: number) {
+        if(await RedisManager.instance.exists(serverName)) return;
+        
+        let server: MinecraftServer = {
+            _name: serverName,
+            _group: serverGroup,
+            _motd: "Starting",
+            _playerCount: 0,
+            _maxPlayerCount: 0,
+            _tps: 0,
+            _ram: 0,
+            _maxRam: 0,
+            _publicAddress: "",
+            _port: serverPort,
+            _donorsOnline: 0,
+            _startUpDate: "",
+            _currentTime: "",
+        };
+
+        await RedisManager.instance.set(`serverstatus.minecraft.US.${serverName}`, JSON.stringify(server));
+    }
+
+    public static async removeServer(serverName: string) {
+        const serverStatusKey = `serverstatus.minecraft.US.${serverName}`;
+        if(!await RedisManager.instance.exists(serverStatusKey)) return;
+        await RedisManager.instance.del(serverStatusKey);
+    }
+
+    public static async removeServerGroup(group: ServerGroup) {
+        const serverGroupKey = `servergroups.${group.name}`;
+
+        if(!(await RedisManager.instance.exists(serverGroupKey))) return;
+
+        await RedisManager.instance.del(serverGroupKey);
     }
 
     public static async registerServerGroup(group: ServerGroup) {

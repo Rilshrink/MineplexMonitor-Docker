@@ -15,14 +15,14 @@ export default class CommandManager {
         this.commands.set(cmd.name, cmd);
     }
 
-    public static init() {
-        CommandManager.loop();
+    public static async init() {
+        await CommandManager.loop();
     }
 
-    private static loop() {
-        this.rl.question('', (string) => {
+    private static async loop() {
+        this.rl.question('', async (string) => {
             if (!string) {
-                this.loop();
+                await this.loop();
                 return;
             }
             const args = string.split(' ');
@@ -32,7 +32,7 @@ export default class CommandManager {
             } else {
                 this.logger.error(`Can't find command "${command}"`);
             }
-            this.loop();
+            await this.loop();
         });
 
         this.rl.on('close', () => {

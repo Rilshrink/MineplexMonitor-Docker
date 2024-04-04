@@ -5,5 +5,5 @@ export default abstract class Command {
         this.name = name;
     }
 
-    public abstract execute(args: string[]): boolean;
+    public abstract execute(args: string[]): Promise<boolean>;
 }
