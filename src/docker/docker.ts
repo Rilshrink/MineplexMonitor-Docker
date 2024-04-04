@@ -53,6 +53,7 @@ export default class DockerManager {
             let s_portsection = group.portSection;
             let s_lobbyzip    = group.worldZip;
             let s_pluginfile  = group.plugin;
+            let s_pluginconfigpath = group.configPath;
 
             let serverNum: number = parseInt(serverName.split("-")[1]);
 
@@ -87,6 +88,16 @@ export default class DockerManager {
                     `MINEPLEX_ADD_ANTICHEAT=${s_addac}`,
                     `MINEPLEX_WORLD_ZIP=${s_lobbyzip}`,
                     `MINEPLEX_PLUGIN=${s_pluginfile}`,
+                    `MINEPLEX_PLUGIN_CONFIG_PATH=${s_pluginconfigpath}`,
+                    //
+                    `MINEPLEX_WEB_SERVER_HOST=${Config.config.dockerConnection.webServerHost}`,
+                    // 
+                    `MINEPLEX_MOUNT_POINT=${Config.config.dockerConnection.serverConfigMountPoint}`,
+                    `MINEPLEX_JARS_PATH=${Config.config.dockerConnection.serverJarsPath}`,
+                    `MINEPLEX_LOBBY_PATH=${Config.config.dockerConnection.serverLobbyPath}`,
+                    `MINEPLEX_CONFIG_PATH=${Config.config.dockerConnection.serverConfigPath}`,
+                    `MINEPLEX_PLUGIN_PATH=${Config.config.dockerConnection.serverPluginPath}`,
+                    `MINEPLEX_UPDATE_PATH=${Config.config.dockerConnection.serverFilesPath}` // TO BE SYMLINKED
                 ],
                 WorkingDir: `${Config.config.dockerConnection.serverSetupScripts}/`,
                 Cmd: [`/bin/sh`, `start.sh`]

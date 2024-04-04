@@ -36,6 +36,7 @@ export class Config {
             },
             dockerConnection: {
                 javaImage: process.env.MM_DOCKER_IMAGE ? process.env.MM_DOCKER_IMAGE : 'openjdk:8',
+                webServerHost: process.env.MM_DOCKER_WEB_SERVER_HOST ? process.env.MM_DOCKER_WEB_SERVER_HOST : "127.0.0.1:1000",
                 serverConfigVolume: process.env.MM_DOCKER_CONFIG_VOLUME ? process.env.MM_DOCKER_CONFIG_VOLUME : "mineplex_data",
                 serverConfigMountPoint: process.env.MM_DOCKER_CONFIG_MOUNT_POINT ? process.env.MM_DOCKER_CONFIG_MOUNT_POINT : "/data",
                 serverSetupScripts: process.env.MM_DOCKER_SCRIPTS_PATH ? process.env.MM_DOCKER_SCRIPTS_PATH : '/data/mineplex/scripts',
@@ -74,6 +75,7 @@ export type ConfigType = {
     // Since everything will be symlinked the plugins and most config files will only have to be changed ONCE and then the servers will need to be restarted of course
     dockerConnection: {
         javaImage: string; // openjdk-8 or any java image essentially, you can even create your own :)
+        webServerHost: string;
         serverConfigVolume: string; // Where all server files are saved, so that way every container can share the same volume :)
         serverConfigMountPoint: string; // 
         serverSetupScripts: string; // These will be provided on the github just place them in the folder

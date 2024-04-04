@@ -20,6 +20,7 @@ export default class RedisManager {
 
     public static async loadServerGroups() {
         let serverGroups = await RedisManager.instance.smembers('servergroups');
+
         if (!serverGroups.includes('Lobby')) {
             RedisManager.logger.log('Missing Lobby group, adding....');
             const lobby = new ServerGroup('Lobby', 'Lobby', 25700);
@@ -27,9 +28,11 @@ export default class RedisManager {
             lobby.addNoCheat = true;
             lobby.maxPlayers = 50;
             lobby.plugin = "Hub.jar";
+            lobby.configPath = "Hub";
             lobby.worldZip = "Lobby_HUB.zip";
             RedisManager.registerServerGroup(lobby);
         }
+
         // Add default mixed arcade so you can easily get the games working.
         if(!serverGroups.includes("MIN")) {
             RedisManager.logger.log('Missing Mixed Arcade group, adding.....');
@@ -44,13 +47,14 @@ export default class RedisManager {
             min.rewardGems = true;
             min.rewardItems = true;
             min.rewardStats = true;
-            min.requiredTotalServers = 1;
+            min.requiredTotalServers = 2;
             min.requiredJoinableServers = 1;
             min.gameAutoStart = true;
             min.hotbarInventory = true;
             min.serverType = "Minigames";
             min.games = "Skywars,SurvivalGames"; // TODO: Add all mixed arcade games :)
             min.plugin = "Arcade.jar";
+            min.configPath = "Arcade";
             min.worldZip = "Lobby_ARCADE.zip";
             RedisManager.registerServerGroup(min);
         }
@@ -69,11 +73,12 @@ export default class RedisManager {
             min.rewardGems = true;
             min.rewardItems = true;
             min.rewardStats = true;
-            min.requiredTotalServers = 1;
+            min.requiredTotalServers = 2;
             min.requiredJoinableServers = 1;
             min.gameAutoStart = true;
             min.serverType = "Minigames";
             min.plugin = "Nano.jar";
+            min.configPath = "Nano";
             min.worldZip = "Lobby_NANO.zip";
             RedisManager.registerServerGroup(min);
         }
