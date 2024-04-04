@@ -57,7 +57,7 @@ export default class RedisManager {
 
         if(!serverGroups.includes("NANO")) {
             RedisManager.logger.log('Missing Nano group, adding.....');
-            const min = new ServerGroup('NANO', 'NANO', 25800);
+            const min = new ServerGroup('NANO', 'NANO', 25900);
             min.arcadeGroup = true;
             min.addNoCheat = true;
             min.maxPlayers = 16;
@@ -74,7 +74,7 @@ export default class RedisManager {
             min.gameAutoStart = true;
             min.serverType = "Minigames";
             min.plugin = "Nano.jar";
-            min.worldZip = "Lobby_ARCADE.zip";
+            min.worldZip = "Lobby_NANO.zip";
             RedisManager.registerServerGroup(min);
         }
 
