@@ -36,7 +36,7 @@ export default class ServerMonitor {
 
     private static killServerList: Map<string, ServerKilledReason> = new Map<string, ServerKilledReason>();
     private static laggyServerList: Map<string, ServerRestartReason> = new Map<string, ServerRestartReason>();
-    private static serverTracker: Map<string, OnlineServerStatus> = new Map<string, OnlineServerStatus>(); 
+    private static serverTracker: Map<string, OnlineServerStatus> = new Map<string, OnlineServerStatus>();
 
     public static async init() {
         // Remove all hanging MPS / Community Servers
@@ -97,7 +97,7 @@ export default class ServerMonitor {
         let totalServers: number = 0;
         const serverStatuses: Map<string, MinecraftServer> = await RedisManager.getServerStatuses();
 
-        serverStatuses.forEach((server: MinecraftServer, key: string) => {
+        serverStatuses.forEach(async (server: MinecraftServer, key: string) => {
             let serverName = server._name;
             totalPlayers += server._playerCount;
             totalServers += 1;
@@ -115,6 +115,17 @@ export default class ServerMonitor {
                     (server._group.toLowerCase() == "ultrahardcore" && 
                     server._motd.toLowerCase().includes("restarting") 
                      && server._playerCount == 0)) {
+                    
+
+                    let serverGroup = await RedisManager.getServerGroupByName(server._group); // Hacky but works for now
+                    if(serverGroup != null && serverGroup != undefined && serverGroup.serverType != undefined) {
+                        if(serverGroup.serverType.toLowerCase() == "player" ||
+                            serverGroup.serverType.toLowerCase() == "community") {
+                            await RedisManager.removeServerGroup(serverGroup.name);
+                            this.logger.log(`Removed server group: ${serverGroup.name} because server got killed.`);
+                        }
+                    }
+                    
                     this.killServerList.set(serverName, ServerKilledReason.Finished);
                     this.serverTracker.set(serverName, OnlineServerStatus.Killed);
                     return;
@@ -153,16 +164,6 @@ export default class ServerMonitor {
             await RedisManager.removeServer(serverName); // Remove from server status
             this.killServerList.delete(serverName);
             this.serverTracker.delete(serverName);
-
-            // TODO: Check if MPS, COM or Event and delete the servergroup for it when removed.
-            let serverGroup = await RedisManager.getServerGroupByName(serverName.split("-")[0]); // Hacky but works for now
-            if(serverGroup != null && serverGroup != undefined) {
-                if(serverGroup.serverType.toLowerCase() == "player" ||
-                   serverGroup.serverType.toLowerCase() == "community") {
-                    await RedisManager.removeServerGroup(serverGroup.name);
-                    this.logger.log(`Removed server group: ${serverGroup.name} because server got killed.`);
-                }
-            }
 
             this.logger.log(`(${serverName}) Killed for: ${reason}`);
         });
