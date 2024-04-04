@@ -45,6 +45,11 @@ export default class ServerMonitor {
 
         serverGroups.forEach(async (serverGroup: string) => {
             let group = await RedisManager.getServerGroupByName(serverGroup);
+
+            if(group == undefined || group.serverType == undefined) {
+                this.logger.warn(`(${serverGroup}) Dead server group`);
+                return;
+            }
             
             if(group.serverType.toLowerCase() == "player" ||
                group.serverType.toLowerCase() == "community") {
