@@ -46,8 +46,8 @@ export class Config {
                 serverFilesPath: process.env.MM_DOCKER_GAME_DATA_PATH ? process.env.MM_DOCKER_GAME_DATA_PATH :'/data/mineplex/update'
             },
             serverMonitor: {
-                serverAutoCreate: process.env.MM_MONITOR_AUTO_CREATE ? process.env.MM_MONITOR_AUTO_CREATE : true,
-                mpsAutoCreate: process.env.MM_MONITOR_MPS_AUTO_CREATE ? process.env.MM_MONITOR_MPS_AUTO_CREATE : true,
+                serverAutoCreate: process.env.MM_MONITOR_AUTO_CREATE ? process.env.MM_MONITOR_AUTO_CREATE.toLowerCase() == 'true' : true,
+                mpsAutoCreate: process.env.MM_MONITOR_MPS_AUTO_CREATE ? process.env.MM_MONITOR_MPS_AUTO_CREATE.toLowerCase() == 'true' : true,
                 lobbyMinimumAvailableSlots: process.env.MM_MONITOR_LOBBY_MIN_SLOTS ? process.env.MM_MONITOR_LOBBY_MIN_SLOTS : 50,
             },
             dashboard: {
