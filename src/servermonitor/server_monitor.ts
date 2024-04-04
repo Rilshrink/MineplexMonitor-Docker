@@ -163,7 +163,7 @@ export default class ServerMonitor {
             }
                 
             let requiredTotal = group.requiredTotalServers ? group.requiredTotalServers : 1;
-            let requiredJoinable = group.requiredJoinableServers ? group.requiredJoinableServers : 1;
+            let requiredJoinable = group.requiredJoinableServers ? group.requiredJoinableServers : 0;
             let joinableServers = 0;
             let serverCount = 0;
             let emptyServers = 0;
