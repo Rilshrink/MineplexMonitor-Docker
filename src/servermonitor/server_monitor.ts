@@ -156,11 +156,11 @@ export default class ServerMonitor {
 
             // TODO: Check if MPS, COM or Event and delete the servergroup for it when removed.
             let serverGroup = await RedisManager.getServerGroupByName(serverName.split("-")[0]); // Hacky but works for now
-            if(serverGroup != null) {
+            if(serverGroup != null && serverGroup != undefined) {
                 if(serverGroup.serverType.toLowerCase() == "player" ||
                    serverGroup.serverType.toLowerCase() == "community") {
                     await RedisManager.removeServerGroup(serverGroup.name);
-                    this.logger.log(`Removed server group: ${serverGroup.name}`);
+                    this.logger.log(`Removed server group: ${serverGroup.name} because server got killed.`);
                 }
             }
 
