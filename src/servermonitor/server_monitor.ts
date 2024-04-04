@@ -189,7 +189,7 @@ export default class ServerMonitor {
                     return;
                 }
 
-                if(checkServerJoinable(server)) {
+                if(checkServerJoinable(server) || server._group.toLowerCase() == "lobby") {
                     joinableServers++;
                 } else {
                     this.logger.debug(`(${serverName}) Not joinable, players: ${server._playerCount}, maxPlayers: ${server._maxPlayerCount}, motd: ${server._motd}`);
@@ -212,7 +212,7 @@ export default class ServerMonitor {
             //this.logger.debug(`(${serverGroup}) Servers to add: ${serversToAdd}`);
             //this.logger.debug(`(${serverGroup}) Servers to kill: ${serversToKill}`);
             //this.logger.debug(`(${serverGroup}) RequiredTotal: ${requiredTotal}, totalServers: ${totalServers}, requiredJoinable: ${requiredJoinable}, joinableServers: ${joinableServers}`);
-            
+            /*
             if(group.name.toLowerCase() == "lobby") {
                 let availableSlots = group.maxPlayers - playerCount;
 
@@ -227,6 +227,7 @@ export default class ServerMonitor {
                     // What's the point of this/???
                 }
             }
+            */
 
             if(ignoreServer(group.name))
                 return;
