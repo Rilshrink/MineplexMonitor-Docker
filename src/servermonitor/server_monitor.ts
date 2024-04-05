@@ -199,8 +199,8 @@ export default class ServerMonitor {
                 serverCount++;
             });
 
-            let serversToKill = (totalServers > requiredTotal && joinableServers > requiredJoinable) ? Math.min(joinableServers - requiredJoinable, _emptyServers.length) : 0;
-            let serversToAdd = Math.max(0, Math.max(requiredTotal - totalServers, requiredJoinable - joinableServers));
+            let serversToKill = (serverCount > requiredTotal && joinableServers > requiredJoinable) ? Math.min(joinableServers - requiredJoinable, _emptyServers.length) : 0;
+            let serversToAdd = Math.max(0, Math.max(requiredTotal - serverCount, requiredJoinable - joinableServers));
             let serversToRestart = 0;
 
             //this.logger.debug(`(${serverGroup}) Servers to add: ${serversToAdd}`);
@@ -222,6 +222,9 @@ export default class ServerMonitor {
                 }
             }
             */
+            if(group.serverType.toLowerCase() == "player" || group.serverType.toLowerCase() == "community") {
+                if(serverCount > 0) serversToAdd = 0;
+            }
 
             if(ignoreServer(group.name))
                 return;
