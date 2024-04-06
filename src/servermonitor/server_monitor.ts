@@ -106,7 +106,7 @@ export default class ServerMonitor {
                 return; // Server is waiting to be killed or restarted
             }
 
-            if(server._motd.toLowerCase().includes("starting")) {
+            if(this.serverTracker.get(serverName) == OnlineServerStatus.Starting) {
                 return;
             }
 
@@ -143,8 +143,8 @@ export default class ServerMonitor {
                 }
             }
 
-            // If time hasn't updated for 70 seconds just assume it's dead :/
-            if((Date.now()) - parseInt(server._currentTime) > 70000) {
+            // If time hasn't updated for 45 seconds just assume it's dead :/
+            if((Date.now()) - parseInt(server._currentTime) > 45000) {
                 this.killServerList.set(serverName, ServerKilledReason.Dead);
                 this.serverTracker.set(serverName, OnlineServerStatus.Killed);
                 return;
