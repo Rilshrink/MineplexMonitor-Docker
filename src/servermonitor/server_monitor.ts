@@ -146,6 +146,8 @@ export default class ServerMonitor {
             // If time hasn't updated for 70 seconds just assume it's dead :/
             if((Date.now()) - parseInt(server._currentTime) > 70000) {
                 this.killServerList.set(serverName, ServerKilledReason.Dead);
+                this.serverTracker.set(serverName, OnlineServerStatus.Killed);
+                return;
             }
 
             this.serverTracker.set(key, OnlineServerStatus.Online);
@@ -183,7 +185,7 @@ export default class ServerMonitor {
                     return;
                 }
 
-                if(checkServerJoinable(server) || server._group.toLowerCase() == "lobby") {
+                if(checkServerJoinable(server) || (server._group.toLowerCase() == "lobby" && server._playerCount < server._maxPlayerCount)) {
                     joinableServers++;
                 } else {
                     //this.logger.debug(`(${serverName}) Not joinable, players: ${server._playerCount}, maxPlayers: ${server._maxPlayerCount}, motd: ${server._motd}`);
@@ -203,9 +205,9 @@ export default class ServerMonitor {
             let serversToAdd = Math.max(0, Math.max(requiredTotal - serverCount, requiredJoinable - joinableServers));
             let serversToRestart = 0;
 
-            //this.logger.debug(`(${serverGroup}) Servers to add: ${serversToAdd}`);
-            //this.logger.debug(`(${serverGroup}) Servers to kill: ${serversToKill}`);
-            //this.logger.debug(`(${serverGroup}) RequiredTotal: ${requiredTotal}, totalServers: ${totalServers}, requiredJoinable: ${requiredJoinable}, joinableServers: ${joinableServers}`);
+            this.logger.debug(`(${serverGroup}) Servers to add: ${serversToAdd}`);
+            this.logger.debug(`(${serverGroup}) Servers to kill: ${serversToKill}`);
+            this.logger.debug(`(${serverGroup}) RequiredTotal: ${requiredTotal}, totalServers: ${totalServers}, requiredJoinable: ${requiredJoinable}, joinableServers: ${joinableServers}`);
             /*
             if(group.name.toLowerCase() == "lobby") {
                 let availableSlots = group.maxPlayers - playerCount;
@@ -223,7 +225,9 @@ export default class ServerMonitor {
             }
             */
             if(group.serverType.toLowerCase() == "player" || group.serverType.toLowerCase() == "community") {
-                if(serverCount > 0) serversToAdd = 0;
+                if(serverCount > 0)  {
+                    serversToAdd = 0;
+                }
             }
 
             if(ignoreServer(group.name))
