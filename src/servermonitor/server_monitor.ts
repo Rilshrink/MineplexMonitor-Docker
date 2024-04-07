@@ -165,7 +165,7 @@ export default class ServerMonitor {
             }
                 
             let requiredTotal = group.requiredTotalServers ? group.requiredTotalServers : 1;
-            let requiredJoinable = group.requiredJoinableServers ? group.requiredJoinableServers : 1;
+            let requiredJoinable = group.requiredJoinableServers ? group.requiredJoinableServers : 0;
             let joinableServers = 0;
             let serverCount = 0;
             let emptyServers = 0;
@@ -207,7 +207,7 @@ export default class ServerMonitor {
 
             this.logger.debug(`(${serverGroup}) Servers to add: ${serversToAdd}`);
             this.logger.debug(`(${serverGroup}) Servers to kill: ${serversToKill}`);
-            this.logger.debug(`(${serverGroup}) RequiredTotal: ${requiredTotal}, totalServers: ${totalServers}, requiredJoinable: ${requiredJoinable}, joinableServers: ${joinableServers}`);
+            this.logger.debug(`(${serverGroup}) RequiredTotal: ${requiredTotal}, totalServers: ${serverCount}, requiredJoinable: ${requiredJoinable}, joinableServers: ${joinableServers}`);
             /*
             if(group.name.toLowerCase() == "lobby") {
                 let availableSlots = group.maxPlayers - playerCount;
